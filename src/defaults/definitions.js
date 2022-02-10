@@ -53,4 +53,20 @@ module.exports = {
     datapointsToAlarm: 1,
     comparisonOperator: 'GreaterThanOrEqualToThreshold',
   },
+  functionErrorRate: {
+    namespace: lambdaNamespace,
+    enabled: true,
+    actionsEnabled: true,
+    type: 'errorRate',
+    metric: 'CustomErrorRate',
+    threshold: 5.0,
+    statistic: 'Sum',
+    period: 60,
+    requestPeriod: 60,
+    errorPeriod: 60,
+    evaluationPeriods: 1,
+    datapointsToAlarm: 1,
+    comparisonOperator: 'GreaterThanOrEqualToThreshold',
+    formula: 'error/request*100'
+  },
 };

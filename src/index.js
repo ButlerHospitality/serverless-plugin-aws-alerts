@@ -231,6 +231,51 @@ class AlertsPlugin {
           ThresholdMetricId: 'ad1',
         },
       };
+    } else if (definition.type === 'errorRate') {
+      alarm = {
+        Type: 'AWS::CloudWatch::Alarm',
+        Properties: {
+          AlarmDescription: `The request error rate exceeded ${definition.threshold}%`,
+          EvaluationPeriods: definition.evaluationPeriods,
+          ComparisonOperator: definition.comparisonOperator,
+          AlarmActions: alarmActions,
+          Threshold: definition.threshold,
+          Metrics: [
+            {
+              Id: 'request',
+              ReturnData: false,
+              MetricStat: {
+                Metric: {
+                  Namespace: namespace,
+                  MetricName: 'Invocations',
+                  Dimensions: dimensions,
+                },
+                Period: definition.requestPeriod,
+                Stat: 'Sum',
+              },
+            },
+            {
+              Id: 'error',
+              ReturnData: false,
+              MetricStat: {
+                Metric: {
+                  Namespace: namespace,
+                  MetricName: 'Errors',
+                  Dimensions: dimensions,
+                },
+                Period: definition.errorPeriod,
+                Stat: 'Sum',
+              },
+            },
+            {
+              Id: 'errorRate',
+              Expression: definition.formula,
+              Label: 'Error Rate Percentage',
+              ReturnData: true,
+            },
+          ]
+        },
+      };
     } else {
       throw new Error(
         `Missing type for alarm ${definition.name} on function ${functionName}, must be one of 'static' or 'anomalyDetection'`
