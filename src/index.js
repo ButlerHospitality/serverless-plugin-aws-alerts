@@ -151,7 +151,10 @@ class AlertsPlugin {
       : this.naming.getDimensionsList(
           definition.dimensions,
           functionRef,
-          definition.omitDefaultDimension
+          definition.omitDefaultDimension,
+          definition,
+          this.serverless.service,
+          functionName
         );
 
     const treatMissingData = definition.treatMissingData
@@ -274,6 +277,29 @@ class AlertsPlugin {
               ReturnData: true,
             },
           ]
+        },
+      };
+    }
+    
+    else if (['apiGateway4xxError', 'apiGateway5xxError'].includes(definition.type)) {
+      alarm = {
+        Type: 'AWS::CloudWatch::Alarm',
+        Properties: {
+          ActionsEnabled: definition.actionsEnabled,
+          Namespace: namespace,
+          MetricName: metricId,
+          AlarmDescription: definition.description,
+          Threshold: definition.threshold,
+          Period: definition.period,
+          EvaluationPeriods: definition.evaluationPeriods,
+          DatapointsToAlarm: definition.datapointsToAlarm,
+          ComparisonOperator: definition.comparisonOperator,
+          OKActions: okActions,
+          AlarmActions: alarmActions,
+          InsufficientDataActions: insufficientDataActions,
+          Statistic: "Sum",
+          Dimensions: dimensions,
+          TreatMissingData: treatMissingData,
         },
       };
     } else {
@@ -463,11 +489,12 @@ class AlertsPlugin {
           alarm
         )
       );
-
+      
       const alarmStatements = alarms.reduce((statements, alarm) => {
         const key = this.naming.getAlarmCloudFormationRef(
           alarm.name,
-          functionName
+          functionName,
+          functionObj
         );
         if (alarm.enabled) {
           const cf = this.getAlarmCloudFormation(
@@ -489,7 +516,7 @@ class AlertsPlugin {
         } else {
           delete statements[key];
         }
-
+        
         return statements;
       }, {});
 

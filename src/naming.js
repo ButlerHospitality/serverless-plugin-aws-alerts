@@ -19,9 +19,35 @@ class Naming {
     return `${upperFirst(metricName)}${functionName}`;
   }
 
-  getDimensionsList(dimensionsList, funcRef, omitDefaultDimension) {
+  getDimensionsList(dimensionsList, funcRef, omitDefaultDimension, definition, service, functionName) {
     if (omitDefaultDimension) {
       return dimensionsList || [];
+    }
+
+    if (definition.namespace == 'AWS/ApiGateway') {
+      let functionObj = service.getFunction(functionName);
+      let httpEvent = functionObj.events.find(event => event.http);
+
+      if (httpEvent) {
+        return [
+          {
+            Name: 'ApiName',
+            Value: definition.apiName
+          },
+          {
+            Name: 'Method',
+            Value: httpEvent['http']['method'].toUpperCase()
+          },
+          {
+            Name: 'Resource',
+            Value: definition.resourcePrefix + httpEvent['http']['path']
+          },
+          {
+            Name: 'Stage',
+            Value: service.provider.stage
+          }
+        ];
+      }
     }
 
     const funcNameDimension = {
